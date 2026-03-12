@@ -1,5 +1,4 @@
 import { Button } from '../components/Button';
-
-export default function HomePage() {
-  return <div><Button label="Click" /></div>;
+export default function Home() {
+  return <main><Button label="Click" /></main>;
 }

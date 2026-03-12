@@ -1,5 +1,2 @@
 import { funcC } from './c';
-
-export function funcB() {
-  return funcC();
-}
+export function funcB() { return funcC(); }

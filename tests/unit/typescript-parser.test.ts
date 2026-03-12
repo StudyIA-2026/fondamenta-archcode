@@ -55,9 +55,9 @@ describe('TypeScript Parser', () => {
   });
 
   it('should detect client component type', async () => {
-    // Button.tsx in simple-nextjs fixture has 'use client' directive
+    // error.tsx in simple-nextjs fixture has 'use client' directive
     const result = await parseTypeScriptFile(
-      resolve(fixturesDir, 'components/Button.tsx'),
+      resolve(fixturesDir, 'app/error.tsx'),
       fixturesDir,
     );
 

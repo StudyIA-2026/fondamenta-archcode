@@ -1,8 +1,1 @@
-{
-  "name": "test-nextjs-app",
-  "version": "1.0.0",
-  "dependencies": {
-    "next": "14.0.0",
-    "react": "18.0.0"
-  }
-}
+{ "name": "simple-nextjs", "version": "1.0.0", "dependencies": { "next": "15.0.0", "@prisma/client": "5.0.0" } }

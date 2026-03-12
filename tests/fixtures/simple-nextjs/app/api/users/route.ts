@@ -1,10 +1,10 @@
-import { auth } from '../../../lib/auth';
-
+import { prisma } from '../../../lib/db';
 export async function GET() {
-  const session = await auth();
-  return Response.json({ users: [] });
+  const users = await prisma.user.findMany();
+  return Response.json(users);
 }
-
 export async function POST(req: Request) {
-  return Response.json({ created: true });
+  const body = await req.json();
+  const user = await prisma.user.create({ data: body });
+  return Response.json(user, { status: 201 });
 }

@@ -1,7 +1,7 @@
-export function auth() {
-  return Promise.resolve({ user: { id: '1' } });
+import { prisma } from './db';
+export async function getUsers() {
+  return prisma.user.findMany();
 }
-
-export function getSession() {
-  return auth();
+export async function getUser(id: string) {
+  return prisma.user.findUnique({ where: { id } });
 }

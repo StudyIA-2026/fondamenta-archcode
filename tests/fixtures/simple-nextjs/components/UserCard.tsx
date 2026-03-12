@@ -1,5 +1,4 @@
-import { Button } from './Button';
-
-export function UserCard({ name }: { name: string }) {
-  return <div><span>{name}</span><Button label="View" /></div>;
+interface User { id: string; name: string; }
+export function UserCard({ user }: { user: User }) {
+  return <div className="card">{user.name}</div>;
 }
