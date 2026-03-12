@@ -10,8 +10,20 @@ export const conventionEnforcerAgent: Agent = {
   run(graph: ProjectGraph, _config: FondamentaConfig): AgentFinding[] {
     const findings: AgentFinding[] = [];
 
+    // Generated files to skip (prisma client, next-env, etc.)
+    const GENERATED_PATTERNS = [
+      /\.prisma\/client/,
+      /next-env\.d\.ts/,
+      /\.generated\./,
+      /\.g\.ts$/,
+      /node_modules/,
+    ];
+
     // 1. Component naming: files should match exported component name
     for (const comp of graph.components) {
+      // Skip generated files
+      if (GENERATED_PATTERNS.some(p => p.test(comp.filePath))) continue;
+
       const fileName = comp.filePath.split('/').pop()?.replace(/\.\w+$/, '');
       if (!fileName) continue;
 

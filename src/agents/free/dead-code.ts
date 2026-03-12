@@ -35,7 +35,7 @@ export const deadCodeAgent: Agent = {
 
         // Skip Next.js implicit files (auto-imported by App Router)
         const fileName = comp.filePath.split('/').pop() ?? '';
-        if (/^(layout|loading|error|not-found|template|default|global-error)\.(tsx|ts)$/.test(fileName)) continue;
+        if (/^(layout|loading|error|not-found|template|default|global-error|middleware)\.(tsx|ts)$/.test(fileName)) continue;
 
         // Skip index/barrel files
         if (comp.filePath.endsWith('/index.ts') || comp.filePath.endsWith('/index.tsx')) continue;

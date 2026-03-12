@@ -2,6 +2,22 @@
 
 All notable changes to Fondamenta ArchCode are documented here.
 
+## [0.4.0] - 2026-03-12
+
+### Added
+- **Manual sections preservation** — marker-based (`<!-- MANUAL-START:id -->`) and split-point (`## Manual Notes`) patterns survive `fondamenta analyze` regeneration
+- **Incremental mode** — `--incremental` flag uses `git diff` to only analyze changed files
+- **writeIfChanged** — only writes files to disk when content actually differs (zero-noise git diffs)
+- **`--no-preserve-manual` flag** — disable manual section preservation
+
+### Fixed
+- **Dead code agent**: added `middleware.ts` to Next.js framework file exclusions
+- **Convention enforcer**: skips generated files (Prisma client, `next-env.d.ts`)
+
+### Changed
+- `fondamenta analyze` now uses `writeIfChanged` by default — unchanged files are not rewritten
+- Test suite expanded from 111 to 123 tests
+
 ## [0.3.0] - 2026-02-24
 
 ### Added

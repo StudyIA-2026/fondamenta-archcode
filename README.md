@@ -128,7 +128,7 @@ export default defineConfig({
 | Framework | Status |
 |-----------|--------|
 | Next.js App Router | Supported |
-| Next.js Pages Router | Planned |
+| Next.js Pages Router | Supported (basic) |
 | Nuxt 3 | Planned |
 | SvelteKit | Planned |
 | Remix | Planned |
@@ -162,7 +162,10 @@ Zero runtime dependencies after analysis — output is plain Markdown.
 | Command | Description |
 |---------|-------------|
 | `fondamenta analyze [path]` | Full codebase analysis → Markdown files |
+| `fondamenta analyze --incremental` | Only analyze git-changed files |
+| `fondamenta analyze --no-preserve-manual` | Skip manual section preservation |
 | `fondamenta agents [path]` | Run code health agents on the project graph |
+| `fondamenta agents --json` | Output findings as JSON (for CI/tools) |
 | `fondamenta diff [path]` | Show changes since last analysis |
 | `fondamenta watch [path]` | Watch mode — regenerate on file changes |
 | `fondamenta ai-context [path]` | Generate AI context files |
@@ -220,6 +223,38 @@ fondamenta ai-context --copilot   # Generate .github/copilot-instructions.md
 fondamenta ai-context --all       # All of the above
 ```
 
+## Manual Sections
+
+Fondamenta preserves human-written content across regenerations. Add manual sections using markers:
+
+```markdown
+<!-- MANUAL-START:my-notes -->
+Your custom notes here — they survive `fondamenta analyze`
+<!-- MANUAL-END:my-notes -->
+```
+
+Or use the split-point pattern — everything after `## Manual Notes` is preserved:
+
+```markdown
+## /dashboard
+(auto-generated content above)
+
+## Manual Notes
+Your custom architecture notes here — preserved across regeneration.
+```
+
+Disable with `--no-preserve-manual`.
+
+## Incremental Mode
+
+Only regenerate documentation for files changed since last commit:
+
+```bash
+fondamenta analyze --incremental
+```
+
+Uses `git diff` to detect changed `.ts`/`.tsx`/`.vue` files and skips unchanged files. Combined with `writeIfChanged` (always active), only files with actual content changes are written to disk — zero noise in git diffs.
+
 ## Automation
 
 ### Cron (recommended for servers)
@@ -259,7 +294,11 @@ git add .planning/
 - [x] AI context generation (`.cursorrules`, `CLAUDE.md`, copilot instructions)
 - [x] Code health agents (8 agents: dead code, circular deps, security, performance, etc.)
 - [x] Open Core licensing (3 free + 5 PRO)
-- [ ] GitHub Action
+- [x] Manual sections preservation (marker-based + split-point)
+- [x] Incremental mode (`--incremental` via git diff)
+- [x] writeIfChanged (zero-noise git diffs)
+- [x] Test suite (120+ tests, CI with GitHub Actions)
+- [ ] GitHub Action (marketplace)
 - [ ] Multi-framework support (Nuxt, SvelteKit, Remix)
 - [ ] Ed25519 license validation (upgrade from HMAC)
 

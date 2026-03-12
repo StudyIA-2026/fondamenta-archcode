@@ -2,6 +2,7 @@ import fg from 'fast-glob';
 import { resolve, relative } from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 import ts from 'typescript';
 import { parseTypeScriptFile, type ParsedFile } from './typescript-parser.js';
 import { parseVueFile, type ParsedVueFile } from './vue-parser.js';
@@ -44,7 +45,16 @@ export async function analyzeProject(
   const compilerOptions = loadTsConfig(projectRoot);
 
   // Discover files
-  const files = await discoverFiles(projectRoot, config);
+  let files = await discoverFiles(projectRoot, config);
+
+  // Incremental mode: filter to git-changed files only
+  if (config.incremental) {
+    const changedFiles = getGitChangedFiles(projectRoot);
+    if (changedFiles.length > 0) {
+      const changedSet = new Set(changedFiles.map(f => resolve(projectRoot, f)));
+      files = files.filter(f => changedSet.has(f));
+    }
+  }
 
   // Parse all files
   const parsedFiles = await parseAllFiles(files, projectRoot, compilerOptions);
@@ -406,4 +416,21 @@ function buildLibInfo(file: ParsedFile, usedBy: string[]): LibInfo {
     sideEffects: file.sideEffects,
     envVars: file.envVars,
   };
+}
+
+function getGitChangedFiles(projectRoot: string): string[] {
+  try {
+    // Get files changed since last commit + uncommitted changes
+    const output = execSync('git diff --name-only HEAD 2>/dev/null || git diff --name-only', {
+      cwd: projectRoot,
+      encoding: 'utf-8',
+      timeout: 5000,
+    });
+    return output
+      .trim()
+      .split('\n')
+      .filter((f: string) => f && (f.endsWith('.ts') || f.endsWith('.tsx') || f.endsWith('.vue')));
+  } catch {
+    return [];
+  }
 }

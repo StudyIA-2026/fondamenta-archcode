@@ -5,6 +5,8 @@ import { resolve, basename } from 'node:path';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { analyzeProject } from './analyzers/project-analyzer.js';
+import { writeIfChanged } from './utils/write-if-changed.js';
+import { extractManualSections, insertManualSections, extractManualTail } from './utils/manual-sections.js';
 import {
   generatePages,
   generateComponents,
@@ -26,7 +28,7 @@ import {
   generateAgentsReport,
 } from './agents/index.js';
 
-const VERSION = '0.3.0';
+const VERSION = '0.4.0';
 
 const program = new Command();
 
@@ -44,6 +46,8 @@ program
   .option('-o, --output <dir>', 'Output directory', '.planning')
   .option('-f, --framework <name>', 'Force framework detection (nextjs-app, nextjs-pages, nuxt, sveltekit, remix)')
   .option('--no-schema', 'Skip ORM schema analysis')
+  .option('--incremental', 'Only regenerate files affected by recent git changes')
+  .option('--no-preserve-manual', 'Disable manual section preservation (enabled by default)')
   .option('-v, --verbose', 'Show detailed progress')
   .action(async (path: string, opts: Record<string, unknown>) => {
     const projectRoot = resolve(path);
@@ -77,6 +81,11 @@ program
       }
     }
 
+    // Incremental mode: use git diff to filter files
+    if (opts.incremental) {
+      config.incremental = true;
+    }
+
     // Analyze
     const spinnerAnalyze = ora('  Analyzing codebase...').start();
     const result = await analyzeProject(projectRoot, config);
@@ -101,16 +110,46 @@ program
 
     const generators = getGenerators(ctx, config, result.framework);
 
+    const preserveManual = opts.preserveManual !== false;
     let filesWritten = 0;
+    let filesSkipped = 0;
+
     for (const gen of generators) {
       if (!gen.enabled) continue;
-      const content = gen.fn();
-      if (content) {
-        const filePath = resolve(outputDir, gen.path);
-        await writeFile(filePath, content, 'utf-8');
+      let content = gen.fn();
+      if (!content) continue;
+
+      const filePath = resolve(outputDir, gen.path);
+
+      // Preserve manual sections from existing file
+      if (preserveManual) {
+        try {
+          const existing = await readFile(filePath, 'utf-8');
+          const manualSections = extractManualSections(existing);
+          if (manualSections.length > 0) {
+            content = insertManualSections(content, manualSections);
+          }
+          // Also preserve split-point tail (content after "---\n\n## Manual Notes")
+          const manualTail = extractManualTail(existing, '## Manual Notes');
+          if (manualTail) {
+            content = content.trimEnd() + '\n\n' + manualTail;
+          }
+        } catch {
+          // File doesn't exist yet — nothing to preserve
+        }
+      }
+
+      // Write only if content changed
+      const changed = await writeIfChanged(filePath, content);
+      if (changed) {
         filesWritten++;
         if (verbose) {
           console.log(chalk.dim(`    ✓ ${gen.path}`));
+        }
+      } else {
+        filesSkipped++;
+        if (verbose) {
+          console.log(chalk.dim(`    ○ ${gen.path} (unchanged)`));
         }
       }
     }
@@ -125,7 +164,8 @@ program
       enums: graph.schema.enums.length,
     });
 
-    spinnerGen.succeed(`  Generated ${chalk.cyan(String(filesWritten))} files → ${chalk.cyan(outputDir)}`);
+    const skippedMsg = filesSkipped > 0 ? chalk.dim(` (${filesSkipped} unchanged)`) : '';
+    spinnerGen.succeed(`  Generated ${chalk.cyan(String(filesWritten))} files → ${chalk.cyan(outputDir)}${skippedMsg}`);
 
     console.log('');
     console.log(chalk.green('  Done!'));
@@ -667,7 +707,7 @@ async function runGeneration(
     const content = gen.fn();
     if (content) {
       const filePath = resolve(outputDir, gen.path);
-      await writeFile(filePath, content, 'utf-8');
+      await writeIfChanged(filePath, content);
     }
   }
 

@@ -214,6 +214,8 @@ export interface FondamentaConfig {
       maxApiCallsPerPage?: number;
     };
   };
+  preserveManual: boolean;
+  incremental: boolean;
 }
 
 export const DEFAULT_CONFIG: FondamentaConfig = {
@@ -247,4 +249,6 @@ export const DEFAULT_CONFIG: FondamentaConfig = {
     generateCursorRules: false,
     generateCopilotInstructions: false,
   },
+  preserveManual: true,
+  incremental: false,
 };
