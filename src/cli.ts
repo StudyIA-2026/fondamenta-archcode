@@ -28,7 +28,7 @@ import {
   generateAgentsReport,
 } from './agents/index.js';
 
-const VERSION = '0.4.0';
+const VERSION = '0.5.0';
 
 const program = new Command();
 
